@@ -10,18 +10,24 @@ import (
 )
 
 // fakeRepo is an in-memory Repository for unit tests.
+//
+// NEDEN elle yazılmış fake (mock kütüphanesi değil): Repository interface'i küçük olduğu için
+// hafızada çalışan basit bir sürüm yazmak kolay. Testler veritabanı olmadan milisaniyeler içinde
+// çalışıyor. Go'da mock kütüphanesi yerine fake yazmak yaygın bir tercih.
+// NEDEN _test.go dosyasında: Bu kod sadece testlerde derleniyor, asıl binary'ye girmiyor.
 type fakeRepo struct {
-	mu         sync.Mutex
+	mu         sync.Mutex // NEDEN mutex: Map'e aynı anda birden fazla goroutine erişirse race condition olur; -race testleri bunu yakalar.
 	customers  map[string]Customer
 	screenings []Screening
 	nextID     int
-	failWith   error // if set, every call returns this error
+	failWith   error // if set, every call returns this error — NEDEN: Veritabanı hatası senaryosunu (ör. 500 dönüyor mu?) test edebilmek için.
 }
 
 func newFakeRepo() *fakeRepo {
 	return &fakeRepo{customers: map[string]Customer{}}
 }
 
+// NEDEN UUID formatında ID: Service validID ile UUID kontrolü yapıyor; sahte ID'ler de bu kontrolden geçmeli.
 func (f *fakeRepo) newID() string {
 	f.nextID++
 	return fmt.Sprintf("00000000-0000-0000-0000-%012d", f.nextID)

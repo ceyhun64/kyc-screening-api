@@ -1,3 +1,5 @@
+# NEDEN CI: Her push ve pull request'te otomatik olarak format, statik analiz, testler ve build
+# çalışıyor. Bozuk kod main branch'e girmeden yakalanıyor.
 name: CI
 
 on:
@@ -9,6 +11,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    # NEDEN service container: CI'da gerçek bir PostgreSQL çalışıyor, böylece entegrasyon
+    # testleri (postgres_test.go) atlanmıyor, gerçekten çalışıyor.
     services:
       postgres:
         image: postgres:16-alpine
@@ -27,16 +31,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # NEDEN go-version-file: Go versiyonu go.mod'dan okunuyor; iki yerde ayrı ayrı tutulmuyor.
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
 
+      # NEDEN gofmt kontrolü: Go'da tek bir resmi format var. Formatlanmamış kod CI'da reddediliyor,
+      # code review'da format tartışması olmuyor.
       - name: Check formatting
         run: test -z "$(gofmt -l .)"
 
+      # NEDEN go vet: Derleyicinin yakalamadığı şüpheli kodları buluyor (ör. yanlış Printf formatı).
       - name: Vet
         run: go vet ./...
 
+      # NEDEN -race: Race detector eşzamanlılık hatalarını yakalıyor.
+      # NEDEN -count=1: Go test sonuçlarını önbelleğe alır; bu bayrak testlerin her seferinde gerçekten çalışmasını sağlıyor.
       - name: Test (with race detector and PostgreSQL)
         env:
           TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/kyc_test?sslmode=disable
@@ -45,6 +55,7 @@ jobs:
       - name: Build
         run: go build ./cmd/api
 
+  # NEDEN ayrı job ve "needs: test": Docker imajı sadece testler geçerse build ediliyor.
   docker:
     runs-on: ubuntu-latest
     needs: test

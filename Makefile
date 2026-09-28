@@ -1,3 +1,6 @@
+# NEDEN Makefile: Sık kullanılan komutlar kısa isimlerle çalışsın (make test, make run).
+# Projeye yeni gelen biri hangi komutları çalıştıracağını burada görüyor.
+
 DATABASE_URL ?= postgres://postgres:postgres@localhost:5432/kyc?sslmode=disable
 TEST_DATABASE_URL ?= postgres://postgres:postgres@localhost:5432/kyc_test?sslmode=disable
 

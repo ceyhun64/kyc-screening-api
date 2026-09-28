@@ -10,6 +10,9 @@ import (
 	"testing"
 )
 
+// NEDEN httptest: Gerçek bir sunucu başlatmadan, port açmadan handler'ları test edebiliyorum.
+// İstek hafızada oluşturuluyor, cevap bir ResponseRecorder'a yazılıyor. Hızlı ve izole.
+// NEDEN io.Discard logger: Testlerde hata logları çıktıyı kirletmesin.
 func newTestMux() (*http.ServeMux, *fakeRepo) {
 	svc, repo := newTestService()
 	mux := http.NewServeMux()
@@ -18,7 +21,7 @@ func newTestMux() (*http.ServeMux, *fakeRepo) {
 }
 
 func do(t *testing.T, mux http.Handler, method, path, body string) *httptest.ResponseRecorder {
-	t.Helper()
+	t.Helper() // NEDEN: Test başarısız olursa hata satırı olarak bu yardımcı değil, onu çağıran test gösterilsin.
 	req := httptest.NewRequest(method, path, strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
@@ -83,6 +86,7 @@ func TestHandlerErrors(t *testing.T) {
 	}
 }
 
+// NEDEN bu test: Güvenlik. Veritabanı hata mesajı istemciye sızmamalı; sadece genel bir mesaj dönmeli.
 func TestInternalErrorsAreHidden(t *testing.T) {
 	mux, repo := newTestMux()
 	repo.failWith = errDatabaseDown
@@ -96,6 +100,8 @@ func TestInternalErrorsAreHidden(t *testing.T) {
 	}
 }
 
+// NEDEN uçtan uca akış testi: Oluştur → tara → durumu kontrol et → geçmişi listele. Parçaların
+// birlikte doğru çalıştığını tek testte görüyorum.
 func TestScreeningFlow(t *testing.T) {
 	mux, _ := newTestMux()
 

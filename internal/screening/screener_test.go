@@ -2,6 +2,8 @@ package screening
 
 import "testing"
 
+// NEDEN table-driven test: Go'da en yaygın test kalıbı. Her durum tablodaki bir satır;
+// yeni bir durum eklemek için sadece bir satır eklemek yeterli. Test mantığı tek yerde.
 func TestNormalize(t *testing.T) {
 	tests := []struct {
 		name string
@@ -18,6 +20,8 @@ func TestNormalize(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		// NEDEN t.Run: Her satır ayrı bir alt test olarak çalışıyor. Biri başarısız olursa
+		// çıktıda adıyla görünüyor ("TestNormalize/turkish_letters") ve tek başına çalıştırılabiliyor.
 		t.Run(tt.name, func(t *testing.T) {
 			if got := Normalize(tt.in); got != tt.want {
 				t.Errorf("Normalize(%q) = %q, want %q", tt.in, got, tt.want)
@@ -40,7 +44,7 @@ func TestScreen(t *testing.T) {
 		{"written without turkish letters", "KEMAL YILDIRIMOGLU", true, "Kemal Yıldırımoğlu"},
 		{"small typo", "Viktor Blakwood", true, "Viktor Blackwood"},
 		{"different person", "Ayşe Yılmaz", false, ""},
-		{"only first name shared", "Viktor Hugo", false, ""},
+		{"only first name shared", "Viktor Hugo", false, ""}, // NEDEN bu durum: Sadece ad aynıysa eşleşme sayılmamalı; yanlış pozitifleri de test ediyorum.
 	}
 
 	for _, tt := range tests {

@@ -14,6 +14,11 @@ import (
 // TEST_DATABASE_URL is set, e.g.:
 //
 //	TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/kyc_test?sslmode=disable go test ./...
+//
+// NEDEN gerçek veritabanıyla test: SQL'i mock'lamak gerçek hataları gizler (yanlış kolon adı,
+// NULL işleme, transaction davranışı). Repository'yi ancak gerçek PostgreSQL doğru test eder.
+// NEDEN t.Skip: Veritabanı yoksa (ör. geliştiricinin bilgisayarında) testler başarısız değil,
+// atlanmış sayılıyor. CI'da TEST_DATABASE_URL ayarlı olduğu için orada mutlaka çalışıyorlar.
 func newTestRepo(t *testing.T) *PostgresRepository {
 	t.Helper()
 	url := os.Getenv("TEST_DATABASE_URL")
@@ -28,11 +33,12 @@ func newTestRepo(t *testing.T) *PostgresRepository {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { db.Close() })
+	t.Cleanup(func() { db.Close() }) // NEDEN t.Cleanup: Test bitince (başarılı ya da değil) bağlantı kapansın.
 
 	if err := database.Migrate(ctx, db); err != nil {
 		t.Fatal(err)
 	}
+	// NEDEN TRUNCATE: Her test temiz bir veritabanıyla başlasın; testler birbirini etkilemesin.
 	if _, err := db.ExecContext(ctx, `TRUNCATE screenings, customers`); err != nil {
 		t.Fatal(err)
 	}

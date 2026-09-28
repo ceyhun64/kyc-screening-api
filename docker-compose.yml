@@ -1,12 +1,15 @@
+# NEDEN docker compose: Tek komutla (docker compose up) veritabanı + API birlikte ayağa kalkıyor.
+# Projeyi inceleyen biri hiçbir şey kurmadan çalıştırabiliyor.
 services:
   db:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: postgres # NEDEN düz şifre: Sadece yerel geliştirme için. Gerçek ortamda secret manager kullanılır.
       POSTGRES_DB: kyc
     ports:
       - "5432:5432"
+    # NEDEN healthcheck: API, veritabanı gerçekten bağlantı kabul etmeye hazır olunca başlasın.
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 2s
@@ -17,9 +20,10 @@ services:
     build: .
     environment:
       PORT: "8080"
+      # NEDEN host "db": Compose içinde servisler birbirine servis adıyla ulaşıyor.
       DATABASE_URL: postgres://postgres:postgres@db:5432/kyc?sslmode=disable
     ports:
       - "8080:8080"
     depends_on:
       db:
-        condition: service_healthy
+        condition: service_healthy # NEDEN: Sadece "db başladı" değil, "db sağlıklı" olunca API başlasın.

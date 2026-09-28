@@ -9,10 +9,12 @@ import (
 	"github.com/ceyhun64/kyc-screening-api/internal/screening"
 )
 
+// NEDEN yardımcı kurulum fonksiyonu: Her test aynı şekilde servis oluşturuyor; tekrar etmesin.
+// Repo'yu da döndürüyorum ki testler içindeki veriyi kontrol edebilsin.
 func newTestService() (*Service, *fakeRepo) {
 	repo := newFakeRepo()
 	svc := NewService(repo, screening.New(screening.DemoList, screening.DemoListVersion, 0.85))
-	svc.now = func() time.Time { return time.Date(2026, 9, 29, 12, 0, 0, 0, time.UTC) }
+	svc.now = func() time.Time { return time.Date(2026, 9, 29, 12, 0, 0, 0, time.UTC) } // NEDEN sabit zaman: "gelecek tarih" testi hangi gün çalışırsa çalışsın aynı sonucu versin.
 	return svc, repo
 }
 
@@ -117,6 +119,7 @@ func TestScreenCustomerNotFound(t *testing.T) {
 	}
 }
 
+// NEDEN bu test: Service hatayı sararken (%w) orijinal hatayı kaybetmemeli. errors.Is hâlâ bulabilmeli.
 func TestRepositoryErrorsAreWrapped(t *testing.T) {
 	svc, repo := newTestService()
 	repo.failWith = errDatabaseDown
