@@ -1,0 +1,16 @@
+# binaries
+/api
+/bin/
+*.exe
+
+# test output
+*.out
+coverage.*
+
+# editor / OS
+.idea/
+.vscode/
+.DS_Store
+
+# local env
+.env
